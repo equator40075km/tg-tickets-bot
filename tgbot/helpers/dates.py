@@ -16,6 +16,21 @@ MONTHS = {
     12: 'декабрь ❄️'
 }
 
+MONTH_PLURAL = {
+    1: 'января',
+    2: 'февраля',
+    3: 'марта',
+    4: 'апреля',
+    5: 'мая',
+    6: 'июня',
+    7: 'июля',
+    8: 'августа',
+    9: 'сентября',
+    10: 'октября',
+    11: 'ноября',
+    12: 'декабря️'
+}
+
 
 def get_month_name(month: int) -> str:
     return MONTHS.get(month, 'ERROR')
@@ -45,3 +60,12 @@ def get_future_month(offset: int) -> date:
 
     return _date.replace(month=_date.month + offset,
                          day=1)
+
+
+def get_human_date(iso_date: str) -> str:
+    try:
+        _date: date = date.fromisoformat(iso_date)
+        return f'{_date.day} {MONTH_PLURAL[_date.month]}'
+    except Exception as e:
+        print(e)
+        return "#Error#"

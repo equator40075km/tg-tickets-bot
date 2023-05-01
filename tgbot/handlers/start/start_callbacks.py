@@ -1,13 +1,13 @@
 import json.decoder
-
+from datetime import date
+from json import loads
 from telebot import TeleBot
 from telebot import types
-from json import loads
-from datetime import date
 
-from helpers import dates
+from handlers.variables import MESSAGES
+from helpers import api
+from helpers.dates import get_month_name, get_human_date
 from . import start_buttons
-
 
 MONTHS_CALLBACK_NAME = 'cb_m'
 DAYS_CALLBACK_NAME = 'cb_d'
@@ -27,12 +27,9 @@ def callback(bot: TeleBot):
         data: dict = loads(call.data)
         _date: date = date.fromisoformat(data.get('date'))
 
-        text = f'Месяц: {dates.get_month_name(_date.month)}.\n' \
-               f'Какие даты вас интересуют?'
-
         bot.send_message(
             call.message.chat.id,
-            text,
+            MESSAGES['months_callback'].format(get_month_name(_date.month)),
             reply_markup=start_buttons.get_days_buttons(_date)
         )
 
@@ -50,10 +47,26 @@ def callback(bot: TeleBot):
         _date: date = date.fromisoformat(data.get('date'))
         days: str = data.get('days')
 
-        text = f'🫡 Я начал искать билеты на {dates.get_month_name(_date.month)}, на {days} числа\n\n' \
-               f'⏳ Одну секунду... ⏳'
+        # bot.send_message(
+        #     call.message.chat.id,
+        #     MESSAGES['days_callback'].format(get_month_name(_date.month), days)
+        # )
 
-        bot.send_message(
-            call.message.chat.id,
-            text
-        )
+        since, until = days.replace(' ', '').split('-')
+        tickets = api.get_tickets(_date, int(since), int(until))
+        if tickets is None or len(tickets['tickets']) == 0:
+            bot.send_message(
+                call.message.chat.id,
+                MESSAGES['tickets_not_found']
+            )
+            return
+
+        for ticket in tickets['tickets']:
+            bot.send_photo(
+                chat_id=call.message.chat.id,
+                photo=ticket['img_url'],
+                caption=f"{ticket['title']}\n\n"
+                        f"Дата: {get_human_date(ticket['date'])}\n\n"
+                        f"→ {ticket['link']}\n\n"
+                        f"{ticket['text']}"
+            )

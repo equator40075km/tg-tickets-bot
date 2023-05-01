@@ -1,13 +1,13 @@
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import date
 from json import dumps
 
 from helpers import dates
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 from . import start_callbacks
 
 
 def get_months_buttons() -> InlineKeyboardMarkup:
-    buttons = InlineKeyboardMarkup()
     today: date = date.today()
 
     btn1 = InlineKeyboardButton(dates.get_month_name(today.month),
@@ -30,6 +30,7 @@ def get_months_buttons() -> InlineKeyboardMarkup:
                                     'date': date3.isoformat()
                                 }))
 
+    buttons = InlineKeyboardMarkup()
     buttons.add(btn1, btn2, btn3)
     return buttons
 
