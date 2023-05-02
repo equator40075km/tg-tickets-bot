@@ -6,9 +6,11 @@ MSGS_FILE = 'handlers/messages.json'
 
 
 def load_json(path: str) -> Union[dict, None]:
-    data = None
-    with open(path) as jsonfile:
-        data = load(jsonfile)
+    try:
+        with open(path) as jsonfile:
+            data = load(jsonfile)
+    except FileNotFoundError:
+        return None
 
     return data
 

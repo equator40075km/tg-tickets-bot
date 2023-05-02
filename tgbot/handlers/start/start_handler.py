@@ -1,26 +1,19 @@
 from telebot import TeleBot, types
 
 from . import start_buttons
-from handlers.variables import MESSAGES
-from helpers import api
+from helpers.variables import MESSAGES
+from helpers import tg
 
 
 def handle(bot: TeleBot):
     @bot.message_handler(commands=["start"])
-    def start(message):
+    def start(message: types.Message):
         if message.chat.type != 'private':
             return
 
-        admins = api.get_tg_admins()
-        if admins:
-            for admin in admins['tg_admins']:
-                if admin['user_id'] == message.from_user.id:
-                    handle_admin(bot, message)
-                    break
-            return
-
-        if 'start' not in MESSAGES:
-            print('Start handler: MESSAGES["start"] not found')
+        _admin = tg.is_admin(message)
+        if _admin:
+            handle_admin(bot, message, _admin)
             return
 
         bot.send_message(
@@ -30,8 +23,14 @@ def handle(bot: TeleBot):
         )
 
 
-def handle_admin(bot: TeleBot, message: types.Message):
+def handle_admin(bot: TeleBot, message: types.Message, admin: tg.TGAdmin):
+    if message.from_user.id not in tg.ADMINS:
+        tg.ADMINS[message.from_user.id] = admin
+
+    tg.ADMINS[message.from_user.id].clear_state()
+
     bot.send_message(
         message.chat.id,
-        MESSAGES['start_admin'].format(message.from_user.first_name)
+        MESSAGES['start_admin'].format(message.from_user.first_name),
+        reply_markup=start_buttons.get_admin_buttons(tg.ADMINS[message.from_user.id])
     )

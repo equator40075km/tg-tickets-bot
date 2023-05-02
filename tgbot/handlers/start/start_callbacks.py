@@ -4,7 +4,7 @@ from json import loads
 from telebot import TeleBot
 from telebot import types
 
-from handlers.variables import MESSAGES
+from helpers.variables import MESSAGES
 from helpers import api
 from helpers.dates import get_month_name, get_human_date
 from . import start_buttons
@@ -57,7 +57,7 @@ def callback(bot: TeleBot):
         if tickets is None or len(tickets['tickets']) == 0:
             bot.send_message(
                 call.message.chat.id,
-                MESSAGES['tickets_not_found']
+                MESSAGES['tickets_not_found'].format(days)
             )
             return
 
