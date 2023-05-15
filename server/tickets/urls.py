@@ -1,8 +1,13 @@
-from django.urls import path
+from django.urls import path, include
 
-from .views import TicketsAPIView, TGAdminsAPIView
+from . import routers
+from .views import OverdueTicketsAPIView, InactiveTGUsersAPIView
+
 
 urlpatterns = [
-    path('tickets/', TicketsAPIView.as_view()),
-    path('tg-admins/', TGAdminsAPIView.as_view())
+    path('tickets/', include(routers.ticket_router.urls)),
+    path('tickets/overdue', OverdueTicketsAPIView.as_view()),
+    path('tg-admins/', include(routers.tg_admin_router.urls)),
+    path('tg-users/', include(routers.tg_user_router.urls)),
+    path('tg-users/inactive', InactiveTGUsersAPIView.as_view()),
 ]

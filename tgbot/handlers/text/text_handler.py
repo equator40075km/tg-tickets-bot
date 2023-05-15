@@ -1,7 +1,9 @@
 from telebot import TeleBot, types
+from datetime import date
 
 from helpers.variables import MESSAGES, ADMIN_BUTTONS
 from helpers import tg
+from helpers.api import TGAdminAPI, TicketAPI, TGUserAPI
 
 
 def handle(bot: TeleBot):
@@ -10,44 +12,127 @@ def handle(bot: TeleBot):
         if message.chat.type != 'private':
             return
 
+        # если сообщение от пользователя
         if not tg.is_admin(message):
+            city_input = tg.USERS_CITY_INPUT.get(message.from_user.id)
+            if city_input:
+                tg_user_data = {
+                    'user_id': message.from_user.id,
+                    'city': message.text,
+                    'last_action': date.today()
+                }
+
+                if TGUserAPI.get_tg_user(message.from_user.id):
+                    tg_user = TGUserAPI.update_tg_user(tg_user_data)
+                else:
+                    tg_user = TGUserAPI.create_tg_user(tg_user_data)
+
+                if tg_user:
+                    bot.send_message(
+                        chat_id=message.chat.id,
+                        text=MESSAGES['user']['city_setted'].format(tg_user['city'])
+                    )
+                else:
+                    bot.send_message(
+                        chat_id=message.chat.id,
+                        text="Не удалось установить город. Попробуйте ещё раз"
+                    )
+
+                tg.USERS_CITY_INPUT.pop(message.from_user.id)
+                return
+
             bot.send_message(
                 chat_id=message.chat.id,
-                text=MESSAGES['text_not_admin']
+                text=MESSAGES['user']['text'].format(message.from_user.first_name)
             )
             return
 
-        # TODO: проверить состояния админа и выполнить соответствующие действия
-        # TODO: после действий обнулить состояние админа
+        admin_id: int = message.from_user.id
+        admin_btns: dict = MESSAGES['admin']['btns']
 
+        # добавление билета
+        if message.text == admin_btns['add_one_ticket']:
+            bot.send_message(
+                chat_id=admin_id,
+                text=MESSAGES['admin']['adding_ticket']
+            )
+            tg.ADMINS[admin_id].set_adding_ticket()
+            return
+
+        # удаление одного билета
+        elif message.text == admin_btns['remove_one_ticket']:
+            tickets = TicketAPI.get_all_tickets()
+            tmp = ''
+            for ticket in tickets:
+                tmp += f"{ticket['id']}:\t\t<{ticket['date']}, {ticket['title']}>\n"
+            if tmp:
+                bot.send_message(chat_id=admin_id, text=tmp)
+            else:
+                bot.send_message(chat_id=admin_id, text='Не найдено ни одного билета')
+                return
+
+            bot.send_message(admin_id, MESSAGES['admin']['removing_ticket'])
+            tg.ADMINS[admin_id].set_removing_ticket()
+            return
+
+        # удаление просроченных билетов
+        elif message.text == admin_btns['remove_overdue_tickets']:
+            count: int = TicketAPI.remove_overdue_tickets()
+            if count == 0:
+                bot.send_message(admin_id, 'Нет просроченных билетов')
+            elif count > 0:
+                bot.send_message(admin_id, MESSAGES['admin']['overdue_tickets_removed'].format(count))
+            else:
+                bot.send_message(admin_id, 'Не удалось удалить просроченные билеты')
+            return
+
+        # назначение нвого админа
+        elif message.text == admin_btns['appoint_admin']:
+            bot.send_message(admin_id, MESSAGES['admin']['appointment'])
+            tg.ADMINS[admin_id].set_appointment()
+            return
+
+        # удаление админа
+        elif message.text == admin_btns['remove_admin']:
+            tg_admins = TGAdminAPI.get_tg_admins()
+            tmp = ''
+            for tg_admin in tg_admins:
+                tmp += f"{tg_admin['id']}: {tg_admin['name']}\n"
+            if tmp:
+                bot.send_message(admin_id, tmp)
+            else:
+                bot.send_message(admin_id, "Ошибка: не удалось найти ни одного администратора")
+                return
+
+            bot.send_message(admin_id, MESSAGES['admin']['removing_admin'])
+            tg.ADMINS[admin_id].set_removing_admin()
+            return
+
+        # удаление неактивных пользователей из БД сервера
+        elif message.text == admin_btns['remove_inactive_users']:
+            count: int = TGUserAPI.remove_inactive_users()
+            if count == 0:
+                bot.send_message(admin_id, 'Нет неактивных пользователей')
+            elif count > 0:
+                bot.send_message(
+                    admin_id,
+                    f'Из БД сервера были удалены неактивные пользователи в количестве {count} шт'
+                )
+            else:
+                bot.send_message(admin_id, 'Не удалось удалить неактивных пользователей')
+            return
+
+        # действие админа
+        if tg.ADMINS[admin_id].is_action():
+            tg.ADMINS[admin_id].do_action(bot, message)
+            return
+
+        # текст, отличный от кнопок
         if message.text not in ADMIN_BUTTONS:
             bot.send_message(
-                chat_id=message.chat.id,
-                text=MESSAGES['admin_other_text']
+                chat_id=admin_id,
+                text=MESSAGES['admin']['text']
             )
             return
 
-        if message.text == MESSAGES['admin__add_one_ticket']:
-            bot.send_message(
-                chat_id=message.chat.id,
-                text='Введите данные для добавления билета:\n. . .'
-            )
-            tg.ADMINS[message.from_user.id].adding_ticket = True
-        elif message.text == MESSAGES['admin__remove_one_ticket']:
-            bot.send_message(
-                chat_id=message.chat.id,
-                text='Выберите, какой билет хотите удалить:\n. . .'
-            )
-            tg.ADMINS[message.from_user.id].removing_ticket = True
-        elif message.text == MESSAGES['admin__remove_overdue_tickets']:
-            # TODO: удалить просроченные билеты
-            bot.send_message(
-                chat_id=message.chat.id,
-                text='Просроченные билеты были успешно удалены.\nСервер говорит Вам спасибо🫡'
-            )
-        elif message.text == MESSAGES['admin__appoint_admin']:
-            bot.send_message(
-                chat_id=message.chat.id,
-                text='Введите ID пользователя Telegram, которого вы хотите назначить администратором.\nНадеюсь, Вы не ошибетесь!'
-            )
-            tg.ADMINS[message.from_user.id].appointment = True
+

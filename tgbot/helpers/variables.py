@@ -10,9 +10,10 @@ if MESSAGES is None:
 
 
 # названия кнопок типа KeyboardButton для админов
-ADMIN_BUTTONS: List[str] = [
-    MESSAGES['admin__add_one_ticket'],
-    MESSAGES['admin__remove_one_ticket'],
-    MESSAGES['admin__remove_overdue_tickets'],
-    MESSAGES['admin__appoint_admin']
-]
+# ADMIN_BUTTONS: List[str] = [
+#     MESSAGES['admin']['btns']['add_one_ticket'],
+#     MESSAGES['admin']['btns']['remove_one_ticket'],
+#     MESSAGES['admin']['btns']['remove_overdue_tickets'],
+#     MESSAGES['admin']['btns']['appoint_admin']
+# ]
+ADMIN_BUTTONS: List[str] = [btn_name for _, btn_name in MESSAGES['admin']['btns'].items()]

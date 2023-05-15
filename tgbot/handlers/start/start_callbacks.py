@@ -5,9 +5,10 @@ from telebot import TeleBot
 from telebot import types
 
 from helpers.variables import MESSAGES
-from helpers import api
+from helpers.api import TicketAPI, TGUserAPI
 from helpers.dates import get_month_name, get_human_date
 from . import start_buttons
+
 
 MONTHS_CALLBACK_NAME = 'cb_m'
 DAYS_CALLBACK_NAME = 'cb_d'
@@ -29,7 +30,7 @@ def callback(bot: TeleBot):
 
         bot.send_message(
             call.message.chat.id,
-            MESSAGES['months_callback'].format(get_month_name(_date.month)),
+            MESSAGES['callback']['months'].format(get_month_name(_date.month)),
             reply_markup=start_buttons.get_days_buttons(_date)
         )
 
@@ -44,29 +45,33 @@ def callback(bot: TeleBot):
     @bot.callback_query_handler(func=lambda call: is_days_callback(call.data))
     def days_callback(call: types.CallbackQuery):
         data: dict = loads(call.data)
-        _date: date = date.fromisoformat(data.get('date'))
+        date_: date = date.fromisoformat(data.get('date'))
         days: str = data.get('days')
 
-        # bot.send_message(
-        #     call.message.chat.id,
-        #     MESSAGES['days_callback'].format(get_month_name(_date.month), days)
-        # )
+        if days.find('-') != -1:
+            since, until = days.replace(' ', '').split('-')
+        else:
+            since, until = days, days
 
-        since, until = days.replace(' ', '').split('-')
-        tickets = api.get_tickets(_date, int(since), int(until))
-        if tickets is None or len(tickets['tickets']) == 0:
+        date_since = date_.replace(day=int(since))
+        date_until = date_.replace(day=int(until))
+        tg_user = TGUserAPI.get_tg_user(call.from_user.id)
+
+        tickets = TicketAPI.get_tickets(tg_user['city'], date_since, date_until)
+        if tickets is None or len(tickets) == 0:
             bot.send_message(
                 call.message.chat.id,
-                MESSAGES['tickets_not_found'].format(days)
+                MESSAGES['user']['tickets_not_found'].format(days)
             )
             return
 
-        for ticket in tickets['tickets']:
+        for ticket in tickets:
             bot.send_photo(
                 chat_id=call.message.chat.id,
-                photo=ticket['img_url'],
+                photo=ticket['photo'],
                 caption=f"{ticket['title']}\n\n"
-                        f"Дата: {get_human_date(ticket['date'])}\n\n"
+                        f"Дата: {get_human_date(ticket['date'])}\n"
+                        f"Город отправления: {ticket['city']}\n\n"
                         f"→ {ticket['link']}\n\n"
                         f"{ticket['text']}"
             )

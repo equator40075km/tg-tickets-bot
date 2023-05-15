@@ -14,13 +14,13 @@ def handle(bot: TeleBot):
         if tg.is_admin(message):
             bot.send_message(
                 message.chat.id,
-                MESSAGES['help_admin'],
+                MESSAGES['admin']['help'],
                 reply_markup=help_buttons.admin_buttons
             )
             return
 
         bot.send_message(
             message.chat.id,
-            MESSAGES['help'],
+            MESSAGES['user']['help'],
             reply_markup=help_buttons.buttons
         )
