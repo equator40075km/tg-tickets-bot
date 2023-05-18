@@ -1,7 +1,8 @@
 from telebot import types, TeleBot
 from typing import Union, Dict
+from datetime import date, datetime, timedelta
 
-from .api import TicketAPI, TGAdminAPI, TGUserAPI
+from .api import TicketAPI, TGAdminAPI
 from .variables import MESSAGES
 
 
@@ -11,17 +12,12 @@ class TGAdmin:
         self.user_id: int = user_id
         self.name: str = name
         self.can_appoint: bool = can_appoint
-        self.adding_ticket: bool = False
         self.removing_ticket: bool = False
         self.appointment: bool = False
         self.removing_admin: bool = False
 
     def __str__(self):
         return f'{self.user_id}: {self.name}'
-
-    def set_adding_ticket(self):
-        self.clear_state()
-        self.adding_ticket = True
 
     def set_removing_ticket(self):
         self.clear_state()
@@ -37,44 +33,16 @@ class TGAdmin:
 
     # обнуление текущего взаимодействия
     def clear_state(self):
-        self.adding_ticket = False
         self.removing_ticket = False
         self.appointment = False
         self.removing_admin = False
 
     # выполняет ли админ какое-то действие из кнопок
     def is_action(self):
-        return self.adding_ticket or self.removing_ticket or self.appointment or self.removing_admin
+        return self.removing_ticket or self.appointment or self.removing_admin
 
     def do_action(self, bot: TeleBot, message: types.Message) -> bool:
-        if self.adding_ticket:
-            try:
-                if message.photo is None:
-                    fields: list = message.text.split('\n')
-                    photo: str = fields[4]
-                    text_index: int = 5
-                else:
-                    fields: list = message.caption.split('\n')
-                    photo: str = message.photo[-1].file_id
-                    text_index: int = 4
-
-                ticket: dict = TicketAPI.create_ticket({
-                    'title': fields[0],
-                    'date': fields[1],
-                    'city': fields[2],
-                    'link': fields[3],
-                    'photo': photo,
-                    'text': '\n'.join(fields[text_index:])
-                })
-                bot.send_message(
-                    chat_id=self.user_id,
-                    text=f"Билет <{ticket['id']}: {ticket['date']} {ticket['title']}> успешно добавлен"
-                )
-            except Exception as e:
-                bot.send_message(self.user_id, f"Ошибка добавления билета:\n{e}")
-                return False
-
-        elif self.removing_ticket:
+        if self.removing_ticket:
             try:
                 if TicketAPI.remove_ticket(int(message.text)):
                     bot.send_message(self.user_id, 'Билет успешно удален')
@@ -119,6 +87,28 @@ class TGAdmin:
         self.clear_state()
         return True
 
+    @staticmethod
+    def add_ticket(bot: TeleBot, message: types.Message):
+        if message.photo is None:
+            return
+
+        try:
+            fields: list = message.caption.split('\n')
+            ticket: dict = TicketAPI.create_ticket({
+                'title': fields[0],
+                'date': fields[1],
+                'city': fields[2],
+                'link': fields[3],
+                'photo': message.photo[-1].file_id,
+                'text': '\n'.join(fields[4:])
+            })
+            bot.send_message(
+                chat_id=message.from_user.id,
+                text=f"Билет <{ticket['id']}: {ticket['date']} {ticket['title']}> успешно добавлен"
+            )
+        except Exception as e:
+            bot.send_message(message.from_user.id, f"Ошибка добавления билета:\n{e}")
+
 
 # словарь состояния админов (user_id: int -> admin: helpers.tg.TGAdmin)
 ADMINS: Dict[int, TGAdmin] = {}
@@ -143,3 +133,9 @@ def is_admin(message: types.Message) -> Union[TGAdmin, None]:
 
 # словарь состояний ввода города (user_id -> bool)
 USERS_CITY_INPUT: Dict[int, bool] = {}
+
+
+def tickets_exists(city: str) -> bool:
+    future_date: datetime = datetime.today() + timedelta(days=65)
+    tickets = TicketAPI.get_tickets(city, date.today(), future_date.date())
+    return tickets and len(tickets) > 0

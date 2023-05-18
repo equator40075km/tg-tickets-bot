@@ -20,11 +20,10 @@ class TicketAPI:
 
     @staticmethod
     def get_tickets(city: str, date_since: date, date_until: date) -> Union[dict, None]:
-        city = city.upper()
         tickets: requests.Response = requests.get(
             api_url('tickets/'),
             data={
-                'city': city,
+                'city': city.upper(),
                 'date_since': date_since.isoformat(),
                 'date_until': date_until.isoformat()
             }
@@ -104,6 +103,7 @@ class TGUserAPI:
     def update_tg_user(tg_user: dict) -> Union[dict, None]:
         try:
             tg_user['city'] = str(tg_user['city']).upper()
+            tg_user['last_action'] = date.today()
             response: requests.Response = requests.put(
                 api_url(f"tg-users/{tg_user['user_id']}/"),
                 data=tg_user

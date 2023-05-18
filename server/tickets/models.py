@@ -14,13 +14,13 @@ class Ticket(models.Model):
 
 
 class TGAdmin(models.Model):
-    user_id = models.BigIntegerField()
+    user_id = models.BigIntegerField(primary_key=True)
     name = models.CharField(max_length=100)
     can_appoint = models.BooleanField(default=False)
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.id}: {self.name}'
+        return f'{self.user_id}: {self.name}'
 
 
 class TGUser(models.Model):

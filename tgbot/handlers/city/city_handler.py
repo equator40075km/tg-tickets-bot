@@ -10,13 +10,6 @@ def handle(bot: TeleBot):
         if message.chat.type != 'private':
             return
 
-        if tg.is_admin(message):
-            bot.send_message(
-                message.chat.id,
-                "Увы, это команда только для пользователей"
-            )
-            return
-
         tg.USERS_CITY_INPUT[message.from_user.id] = True
         bot.send_message(
             message.chat.id,

@@ -15,15 +15,27 @@ def handle(bot: TeleBot):
         admin = tg.is_admin(message)
         if admin:
             handle_admin(bot, message, admin)
-            return
 
         tg_user = TGUserAPI.get_tg_user(message.from_user.id)
 
         if tg_user is None:
             tg.USERS_CITY_INPUT[message.from_user.id] = True
+
+            greeting = f"{MESSAGES['user']['greeting'].format(message.from_user.first_name)}\n" if not admin else ''
+
             bot.send_message(
                 message.chat.id,
-                MESSAGES['user']['city_not_set'].format(message.from_user.first_name)
+                greeting + MESSAGES['user']['city_not_set']
+            )
+            return
+
+        # обновление активности пользователя в бд
+        tg_user: dict = TGUserAPI.update_tg_user(tg_user)
+
+        if tg_user and tg_user['city'] and not tg.tickets_exists(tg_user.get('city')):
+            bot.send_message(
+                chat_id=message.chat.id,
+                text=MESSAGES['user']['no_tickets_in_city'].format(tg_user['city'].upper())
             )
             return
 

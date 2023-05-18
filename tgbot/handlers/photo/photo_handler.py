@@ -17,10 +17,4 @@ def handle(bot: TeleBot):
             )
             return
 
-        admin_id: int = message.from_user.id
-
-        if tg.ADMINS[admin_id].adding_ticket:
-            tg.ADMINS[admin_id].do_action(bot, message)
-            return
-
-        bot.send_message(admin_id, 'чё это')
+        tg.TGAdmin.add_ticket(bot, message)

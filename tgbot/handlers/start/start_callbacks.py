@@ -61,7 +61,7 @@ def callback(bot: TeleBot):
         if tickets is None or len(tickets) == 0:
             bot.send_message(
                 call.message.chat.id,
-                MESSAGES['user']['tickets_not_found'].format(days)
+                MESSAGES['user']['tickets_not_found'].format(days, tg_user['city'])
             )
             return
 

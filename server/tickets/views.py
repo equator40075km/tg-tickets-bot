@@ -41,6 +41,6 @@ class TGUserViewSet(viewsets.ModelViewSet):
 
 class InactiveTGUsersAPIView(views.APIView):
     def delete(self, request):
-        inactive_date: datetime = datetime.today() - timedelta(days=7)
+        inactive_date: datetime = datetime.today() - timedelta(days=30)
         result = TGUser.objects.filter(last_action__lt=inactive_date.date()).delete()
         return Response({'count': result[0]})
