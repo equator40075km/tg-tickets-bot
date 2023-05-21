@@ -114,17 +114,17 @@ class TGAdmin:
 ADMINS: Dict[int, TGAdmin] = {}
 
 
-def is_admin(message: types.Message) -> Union[TGAdmin, None]:
-    if message.from_user.id in ADMINS:
-        return ADMINS.get(message.from_user.id, None)
+def is_admin(user: types.User) -> Union[TGAdmin, None]:
+    if user.id in ADMINS:
+        return ADMINS.get(user.id, None)
 
     admins = TGAdminAPI.get_tg_admins()
     if admins:
         for admin in admins:
-            if admin['user_id'] == message.from_user.id:
+            if admin['user_id'] == user.id:
                 return TGAdmin(
-                    user_id=message.from_user.id,
-                    name=message.from_user.username,
+                    user_id=user.id,
+                    name=user.username,
                     can_appoint=admin['can_appoint']
                 )
 

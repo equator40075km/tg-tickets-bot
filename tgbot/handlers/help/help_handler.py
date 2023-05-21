@@ -11,7 +11,7 @@ def handle(bot: TeleBot):
         if message.chat.type != 'private':
             return
 
-        if tg.is_admin(message):
+        if tg.is_admin(message.from_user):
             bot.send_message(
                 message.chat.id,
                 MESSAGES['admin']['help'],

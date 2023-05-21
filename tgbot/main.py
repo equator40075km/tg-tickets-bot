@@ -12,11 +12,12 @@ def exists_director() -> bool:
             if admin['user_id'] == director_id:
                 return True
 
-    return TGAdminAPI.create_tg_admin({
+    director = TGAdminAPI.create_tg_admin({
         'user_id': director_id,
         'name': getenv('TG_DIRECTOR_USERNAME'),
         'can_appoint': True
-    }) is not None
+    })
+    return director is not None
 
 
 if __name__ == "__main__":
@@ -25,7 +26,7 @@ if __name__ == "__main__":
         exit(0)
 
     if not exists_director():
-        print("Can't create director in server")
+        print("Can't create director on server")
         exit(0)
 
     bot.infinity_polling()

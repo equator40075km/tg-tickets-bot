@@ -32,6 +32,9 @@ MONTH_PLURAL = {
 }
 
 
+DATE_FORMAT = '%d.%m.%Y'
+
+
 def get_month_name(month: int) -> str:
     return MONTHS.get(month, 'ERROR')
 

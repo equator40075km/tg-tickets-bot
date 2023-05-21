@@ -37,7 +37,7 @@ def get_months_buttons() -> types.InlineKeyboardMarkup:
     return buttons
 
 
-def get_days_buttons(_date: date) -> types.InlineKeyboardMarkup:
+def get_multi_days_buttons(_date: date) -> types.InlineKeyboardMarkup:
     buttons: List[types.InlineKeyboardButton] = []
     days1, days2, days3 = '', '', ''
 
@@ -92,6 +92,51 @@ def get_days_buttons(_date: date) -> types.InlineKeyboardMarkup:
 
     markup = types.InlineKeyboardMarkup()
     markup.add(*buttons)
+    return markup
+
+
+def get_days_buttons(since: date, until: date) -> types.InlineKeyboardMarkup:
+    markup: types.InlineKeyboardMarkup = types.InlineKeyboardMarkup()
+
+    def get_day_inline_btn(_date: date) -> types.InlineKeyboardButton:
+        return types.InlineKeyboardButton(
+            text=_date.strftime(dates.DATE_FORMAT),
+            callback_data=dumps({
+                'cb': start_callbacks.TICKETS_CALLBACK_NAME,
+                'date': _date.isoformat()
+            })
+        )
+
+    tmp: date = since
+    while tmp.day <= until.day:
+        row = []
+        try:
+            for i in range(2):
+                row.append(get_day_inline_btn(tmp))
+                tmp = tmp.replace(day=tmp.day + 1)
+            markup.add(*row)
+        except ValueError:
+            if row:
+                markup.add(*row)
+            break
+
+    markup.add(types.InlineKeyboardButton(
+        text=f"{since.strftime(dates.DATE_FORMAT)} - {until.strftime(dates.DATE_FORMAT)}",
+        callback_data=dumps({
+            'cb': start_callbacks.TICKETS_CALLBACK_NAME,
+            'date': since.isoformat(),
+            'until': until.isoformat()
+        })
+    ))
+
+    markup.add(types.InlineKeyboardButton(
+        text='Начать поиск заново',
+        callback_data=dumps({
+            'cb': start_callbacks.RESTART_CALLBACK_NAME,
+            'cmd': 'start'
+        })
+    ))
+
     return markup
 
 

@@ -4,6 +4,7 @@ from datetime import date
 from helpers.variables import MESSAGES, ADMIN_BUTTONS
 from helpers import tg
 from helpers.api import TGAdminAPI, TicketAPI, TGUserAPI
+from handlers.start.start_handler import start
 
 
 def handle(bot: TeleBot):
@@ -12,7 +13,7 @@ def handle(bot: TeleBot):
         if message.chat.type != 'private':
             return
 
-        if tg.is_admin(message):
+        if tg.is_admin(message.from_user):
             if handle_admin_action(bot, message):
                 return
 
@@ -29,25 +30,15 @@ def handle(bot: TeleBot):
             else:
                 tg_user = TGUserAPI.create_tg_user(tg_user_data)
 
-            if tg_user:
-                bot.send_message(
-                    chat_id=message.chat.id,
-                    text=MESSAGES['user']['city_setted'].format(tg_user['city'])
-                )
-            else:
+            if tg_user is None:
                 bot.send_message(
                     chat_id=message.chat.id,
                     text="Не удалось установить город. Попробуйте ещё раз"
                 )
+                return
 
             tg.USERS_CITY_INPUT.pop(message.from_user.id)
-
-            if not tg.tickets_exists(tg_user['city']):
-                bot.send_message(
-                    chat_id=message.chat.id,
-                    text=MESSAGES['user']['no_tickets_in_city'].format(tg_user['city'].upper())
-                )
-
+            start(bot, message.from_user)
             return
 
         bot.send_message(
