@@ -10,6 +10,7 @@ def handle(bot: TeleBot):
     @bot.message_handler(commands=["start"])
     def start_handler(message: types.Message):
         if message.chat.type == 'private':
+            bot.delete_message(chat_id=message.chat.id, message_id=message.id)
             start(bot, message.from_user)
 
 

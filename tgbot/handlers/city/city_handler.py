@@ -10,6 +10,8 @@ def handle(bot: TeleBot):
         if message.chat.type != 'private':
             return
 
+        bot.delete_message(chat_id=message.chat.id,message_id=message.id)
+
         tg.USERS_CITY_INPUT[message.from_user.id] = True
         bot.send_message(
             message.chat.id,
