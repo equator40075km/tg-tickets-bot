@@ -2,7 +2,7 @@ from telebot import TeleBot, types
 from datetime import date
 
 from helpers.variables import MESSAGES, ADMIN_BUTTONS
-from helpers import tg
+from helpers import users, admins
 from helpers.api import TGAdminAPI, TicketAPI, TGUserAPI
 from handlers.start.start_handler import start
 
@@ -13,11 +13,11 @@ def handle(bot: TeleBot):
         if message.chat.type != 'private':
             return
 
-        if tg.is_admin(message.from_user):
+        if admins.is_admin(message.from_user):
             if handle_admin_action(bot, message):
                 return
 
-        city_input = tg.USERS_CITY_INPUT.get(message.from_user.id)
+        city_input = users.USERS_CITY_INPUT.get(message.from_user.id)
         if city_input:
             tg_user_data = {
                 'user_id': message.from_user.id,
@@ -37,7 +37,7 @@ def handle(bot: TeleBot):
                 )
                 return
 
-            tg.USERS_CITY_INPUT.pop(message.from_user.id)
+            users.USERS_CITY_INPUT.pop(message.from_user.id)
             start(bot, message.from_user)
             return
 
@@ -73,7 +73,7 @@ def handle_admin_action(bot: TeleBot, message: types.Message) -> bool:
             return True
 
         bot.send_message(admin_id, MESSAGES['admin']['removing_ticket'])
-        tg.ADMINS[admin_id].set_removing_ticket()
+        admins.ADMINS[admin_id].set_removing_ticket()
         return True
 
     # удаление просроченных билетов
@@ -90,7 +90,7 @@ def handle_admin_action(bot: TeleBot, message: types.Message) -> bool:
     # назначение нвого админа
     elif message.text == admin_btns['appoint_admin']:
         bot.send_message(admin_id, MESSAGES['admin']['appointment'])
-        tg.ADMINS[admin_id].set_appointment()
+        admins.ADMINS[admin_id].set_appointment()
         return True
 
     # удаление админа
@@ -106,7 +106,7 @@ def handle_admin_action(bot: TeleBot, message: types.Message) -> bool:
             return True
 
         bot.send_message(admin_id, MESSAGES['admin']['removing_admin'])
-        tg.ADMINS[admin_id].set_removing_admin()
+        admins.ADMINS[admin_id].set_removing_admin()
         return True
 
     # удаление неактивных пользователей из БД сервера
@@ -124,8 +124,8 @@ def handle_admin_action(bot: TeleBot, message: types.Message) -> bool:
         return True
 
     # действие админа
-    if tg.ADMINS[admin_id].is_action():
-        tg.ADMINS[admin_id].do_action(bot, message)
+    if admins.ADMINS[admin_id].is_action():
+        admins.ADMINS[admin_id].do_action(bot, message)
         return True
 
     return False

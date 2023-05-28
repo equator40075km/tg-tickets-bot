@@ -4,8 +4,6 @@ from json import dumps
 from typing import List
 
 from helpers import dates
-from helpers.variables import MESSAGES, ADMIN_BUTTONS
-from helpers.tg import TGAdmin
 from . import start_callbacks
 
 
@@ -138,19 +136,3 @@ def get_days_buttons(since: date, until: date) -> types.InlineKeyboardMarkup:
     ))
 
     return markup
-
-
-def get_admin_buttons(admin: TGAdmin) -> types.ReplyKeyboardMarkup:
-    admin_markup = types.ReplyKeyboardMarkup()
-
-    admin_markup.add(MESSAGES['admin']['btns']['add_one_ticket'],
-                     MESSAGES['admin']['btns']['remove_one_ticket'])
-
-    admin_markup.add(MESSAGES['admin']['btns']['remove_overdue_tickets'],
-                     MESSAGES['admin']['btns']['remove_inactive_users'])
-
-    if admin.can_appoint:
-        admin_markup.add(MESSAGES['admin']['btns']['appoint_admin'],
-                         MESSAGES['admin']['btns']['remove_admin'])
-
-    return admin_markup

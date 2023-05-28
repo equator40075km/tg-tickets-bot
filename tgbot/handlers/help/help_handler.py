@@ -2,7 +2,7 @@ from telebot import TeleBot, types
 
 from . import help_buttons
 from helpers.variables import MESSAGES
-from helpers import tg
+from helpers.admins import is_admin
 
 
 def handle(bot: TeleBot):
@@ -13,7 +13,7 @@ def handle(bot: TeleBot):
 
         bot.delete_message(chat_id=message.chat.id, message_id=message.id)
 
-        if tg.is_admin(message.from_user):
+        if is_admin(message.from_user):
             bot.send_message(
                 message.chat.id,
                 MESSAGES['admin']['help'],

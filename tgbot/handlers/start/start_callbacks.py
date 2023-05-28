@@ -2,11 +2,12 @@ import json.decoder
 from datetime import date
 from json import loads
 from telebot import TeleBot, types
-from typing import Union
+from typing import Union, List
 
 from helpers.variables import MESSAGES
 from helpers.api import TicketAPI, TGUserAPI
 from helpers import dates
+from helpers.users import add_user_msgs_ids
 from . import start_buttons
 
 
@@ -79,8 +80,9 @@ def callback(bot: TeleBot):
             )
             return
 
+        ticket_msgs_ids: List[int] = []
         for ticket in tickets:
-            bot.send_photo(
+            ticket_msg: types.Message = bot.send_photo(
                 chat_id=call.message.chat.id,
                 photo=ticket['photo'],
                 caption=f"{ticket['title']}\n\n"
@@ -89,13 +91,15 @@ def callback(bot: TeleBot):
                         f"→ {ticket['link']}\n\n"
                         f"{ticket['text']}"
             )
+            ticket_msgs_ids.append(ticket_msg.id)
 
+        add_user_msgs_ids(tg_user, ticket_msgs_ids)
         bot.answer_callback_query(call.id)
 
     @bot.callback_query_handler(func=lambda call: callback_name(call.data) == RESTART_CALLBACK_NAME)
     def restart_callback(call: types.CallbackQuery):
-        from handlers.handler import bot
         from .start_handler import start
+
         bot.delete_message(call.from_user.id, call.message.id)
         start(bot, call.from_user)
         bot.answer_callback_query(call.id)

@@ -1,6 +1,5 @@
 from telebot import types, TeleBot
 from typing import Union, Dict
-from datetime import date, datetime, timedelta
 
 from .api import TicketAPI, TGAdminAPI
 from .variables import MESSAGES
@@ -129,13 +128,3 @@ def is_admin(user: types.User) -> Union[TGAdmin, None]:
                 )
 
     return None
-
-
-# словарь состояний ввода города (user_id -> bool)
-USERS_CITY_INPUT: Dict[int, bool] = {}
-
-
-def tickets_exists(city: str) -> bool:
-    future_date: datetime = datetime.today() + timedelta(days=65)
-    tickets = TicketAPI.get_tickets(city, date.today(), future_date.date())
-    return tickets and len(tickets) > 0

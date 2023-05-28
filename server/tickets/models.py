@@ -27,6 +27,7 @@ class TGUser(models.Model):
     user_id = models.BigIntegerField(primary_key=True)
     city = models.CharField(max_length=100)
     last_action = models.DateField()
+    msgs2delete = models.TextField(blank=True)
 
     def __str__(self):
         return f'{self.user_id}: {self.city}, {self.last_action}'

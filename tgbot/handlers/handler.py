@@ -6,6 +6,7 @@ from telebot import TeleBot
 from .start import start_handler, start_callbacks
 from .help import help_handler
 from .city import city_handler
+from .admin import admin_handler
 from .text import text_handler
 from .photo import photo_handler
 
@@ -17,6 +18,7 @@ bot = TeleBot(token=os.getenv('TG_TOKEN'))
 start_handler.handle(bot)
 help_handler.handle(bot)
 city_handler.handle(bot)
+admin_handler.handle(bot)
 text_handler.handle(bot)
 photo_handler.handle(bot)
 
